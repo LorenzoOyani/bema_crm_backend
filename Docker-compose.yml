@@ -1,0 +1,37 @@
+services:
+  db:
+    image: postgres:14
+    container_name: db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: bema_crm_table_schema
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: Admin
+    ports:
+      - "6543:5432"
+    volumes:
+      - db-data:/var/lib/postgresql/data
+      # This will run your schema.sql automatically on first init
+      - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
+
+  app:
+    build: .
+    container_name: bema_crm_app
+    restart: always
+    depends_on:
+      - db
+    # App config & secrets live in .env (not baked into the image)
+    env_file:
+      - .env
+    ports:
+      - "4000:3000"
+
+    command: sh -c "sleep 10 && npm start"
+
+    # If you want hot reload in dev, uncomment the volumes below
+    # volumes:
+    #   - .:/usr/src/app
+
+volumes:
+  db-data:
+  pg-data:
