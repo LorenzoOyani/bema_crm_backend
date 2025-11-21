@@ -21,7 +21,7 @@ CREATE TABLE IF NOT EXISTS custom_fields (
 -- subscriber_custom_field_values: EAV values for each subscriber
 CREATE TABLE IF NOT EXISTS subscriber_custom_field_values (
   id SERIAL PRIMARY KEY,
-  subscriber_id INTEGER NOT NULL REFERENCES subscribers(id) ON DELETE CASCADE,
+  subscriber_id INTEGER NOT NULL REFERENCES subscriber(id) ON DELETE CASCADE,
   field_id INTEGER NOT NULL REFERENCES custom_fields(id) ON DELETE CASCADE,
   field_value TEXT,
   UNIQUE (subscriber_id, field_id)
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS subscriber_custom_field_values (
 -- subscriber_campaign_participation: which campaign + group a subscriber is in
 CREATE TABLE IF NOT EXISTS subscriber_campaign_participation (
   id SERIAL PRIMARY KEY,
-  subscriber_id INTEGER NOT NULL REFERENCES subscribers(id) ON DELETE CASCADE,
+  subscriber_id INTEGER NOT NULL REFERENCES subscriber(id) ON DELETE CASCADE,
   campaign_id VARCHAR(100) NOT NULL,
   campaign_group VARCHAR(100) NOT NULL,
   created_at TIMESTAMP DEFAULT NOW(),

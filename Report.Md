@@ -133,7 +133,7 @@ What Phase 1 Proves
 ✔ Flow-to-flow communication is stable and production-ready
 ✔ Node.js backend successfully receives and logs JSON
 ✔ PostgreSQL JSONB preserves nested data correctly
-✔ The architecture defined in the Nodejs PoC is valid
+✔ The architecture defined in the Node.js PoC is valid
 ✔ Ready for Phase 2 automation rules, subscriber models, templates, and campaign scheduling
 
 ```
