@@ -55,3 +55,11 @@ VALUES
   ('BC_field_ref_verified', 'text', 'no'),
   ('BC_field_ref_level', 'int', '0')
 ON CONFLICT (field_name) DO NOTHING;
+
+-- flow_logs: debug table for n8n Flow-to-Flow PoC
+CREATE TABLE IF NOT EXISTS flow_logs (
+  id SERIAL PRIMARY KEY,
+  payload JSONB NOT NULL,
+  note VARCHAR(255),
+  created_at TIMESTAMP DEFAULT NOW()
+);

@@ -3,7 +3,7 @@ const express = require("express");
 const db = require("./db");
 
 const subscriberRoutes = require("../routes/subscriberRoutes")
-
+const flowLogsService = require("../service/flowlogService");
 const app = express();
 
 app.use(express.json());
@@ -25,6 +25,39 @@ app.get('/', async (req, res) => {
 
 
 app.use('/api/subscribers', subscriberRoutes);
+
+
+
+/**
+ * @typedef {Object} FlowLog
+ * @property {number} id
+ * @property {Object} payload
+ * @property {string|null} note
+ */
+
+/**
+ * @returns {Promise<FlowLog>}
+ */
+
+app.post('/api/test/flow_logs', async (req, res) => {
+    try{
+        const payload = req.body;
+        const n8nFlowLogs = await flowLogsService.createFlowLog(payload, 'infra_phase_1_flow_to_flow');
+
+
+        console.log("flow log created with id: ",  n8nFlowLogs.id);
+
+
+        return res.json({
+            success: true,
+            id: n8nFlowLogs.id,
+             storedPayload: n8nFlowLogs.payload,
+        });
+    }catch(err){
+        console.error('Error creating flow log', err);
+        return res.status(500).json({error: err.message});
+    }
+});
 
 app.listen(PORT, () => {
   console.log(`Server running on port ${PORT}`);

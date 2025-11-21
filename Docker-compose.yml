@@ -1,3 +1,5 @@
+version: "3.9"
+
 services:
   db:
     image: postgres:14
@@ -11,7 +13,7 @@ services:
       - "6543:5432"
     volumes:
       - db-data:/var/lib/postgresql/data
-      # This will run your schema.sql automatically on first init
+      # Apply schema automatically on first init
       - ./sql/schema.sql:/docker-entrypoint-initdb.d/schema.sql:ro
 
   app:
@@ -20,18 +22,45 @@ services:
     restart: always
     depends_on:
       - db
-    # App config & secrets live in .env (not baked into the image)
     env_file:
       - .env
     ports:
       - "4000:3000"
-
+    # Small delay so DB is ready before Node starts
     command: sh -c "sleep 10 && npm start"
-
-    # If you want hot reload in dev, uncomment the volumes below
+    # For local dev hot reload, you can uncomment this:
     # volumes:
     #   - .:/usr/src/app
 
+  n8n:
+    image: n8nio/n8n:latest
+    container_name: n8n-bema_backend
+    restart: unless-stopped
+    depends_on:
+      - db
+      - app
+    ports:
+      - "5678:5678"
+    environment:
+      # Basic auth for the n8n UI
+      N8N_BASIC_AUTH_ACTIVE: "true"
+      N8N_BASIC_AUTH_USER: admin
+      N8N_BASIC_AUTH_PASSWORD: admin123
+
+      # How n8n thinks about its own URL (external access)
+      N8N_HOST: "localhost"
+      N8N_PORT: 5678
+      N8N_PROTOCOL: "http"
+
+      # Timezone
+      GENERIC_TIMEZONE: "Africa/Lagos"
+
+      # Optional: if you expose n8n externally, set WEBHOOK_URL to the public URL
+      # WEBHOOK_URL: "https://your-domain.com/"
+    volumes:
+      - n8n_data:/home/node/.n8n
+    user: "1000:1000"
+
 volumes:
   db-data:
-  pg-data:
+  n8n_data:
