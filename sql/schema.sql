@@ -63,3 +63,15 @@ CREATE TABLE IF NOT EXISTS flow_logs (
   note VARCHAR(255),
   created_at TIMESTAMP DEFAULT NOW()
 );
+
+
+CREATE TABLE IF NOT EXISTS email_templates (
+  id SERIAL PRIMARY KEY,
+  template_name VARCHAR(255) NOT NULL UNIQUE,
+  subject_template TEXT NOT NULL,
+  html_template TEXT NOT NULL,
+  text_template TEXT,
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+)
+
