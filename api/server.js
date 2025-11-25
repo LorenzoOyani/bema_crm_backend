@@ -28,7 +28,7 @@ app.get('/', async (req, res) => {
 
 app.use('/api/subscribers', subscriberRoutes);
 
-app.use('api/templates', templateRoutes);
+app.use('/api/templates', templateRoutes);
 
 app.use('/api/automations', automationRoutes);
 

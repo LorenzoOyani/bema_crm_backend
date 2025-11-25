@@ -9,16 +9,16 @@ const db = require('../api/db')
  * @param {string} [params.campaignId]
  * @param {string} params.templateName
  * @param {string} params.status
- * @param {Object} [params.jsonResponse]
+ * @param {Object} [params.rawResponse]
  */
-async function logEmail({subscriberId, campaignId, templateName, status, jsonResponse}) {
+async function logEmail({subscriberId, campaignId, templateName, status, rawResponse}) {
     const res = await db.query(
         `
             INSERT INTO email_logs (subscriber_id, campaign_id, template_name, status, raw_response)
             VALUES ($1, $2, $3, $4, $5)
             RETURNING *;
         `,
-        [subscriberId || null, campaignId || null, templateName, status, jsonResponse || null]
+        [subscriberId || null, campaignId || null, templateName, status, rawResponse || null]
     );
 
     return res.rows[0]

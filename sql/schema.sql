@@ -18,6 +18,8 @@ CREATE TABLE IF NOT EXISTS custom_fields (
   default_value TEXT
 );
 
+
+
 -- subscriber_custom_field_values: EAV values for each subscriber
 CREATE TABLE IF NOT EXISTS subscriber_custom_field_values (
   id SERIAL PRIMARY KEY,
@@ -38,15 +40,18 @@ CREATE TABLE IF NOT EXISTS subscriber_campaign_participation (
   UNIQUE (subscriber_id, campaign_id)
 );
 
+
 CREATE TABLE IF NOT EXISTS email_logs (
   id SERIAL PRIMARY KEY,
-  subscriber_id INTEGER REFERENCES subscribers(id),
+  subscriber_id INTEGER REFERENCES subscriber(id) ON DELETE SET NULL,
   campaign_id VARCHAR(100),
   template_name VARCHAR(255),
   sent_at TIMESTAMP DEFAULT NOW(),
   status VARCHAR(50),
   raw_response JSONB
 );
+
+
 
 INSERT INTO custom_fields (field_name, field_type, default_value)
 VALUES

@@ -1,5 +1,6 @@
 require("dotenv").config();
 const axios = require("axios");
+const templateService = require('../service/templateService');
 
 const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY;
 const FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL;
@@ -99,8 +100,104 @@ async function sendWelcomeEmail(subscriber, extraToken = {}) {
 
 }
 
+/**
+ * Send an email using a stored template (email_templates table).
+ *
+ * @param {Object} subscriberCtx - object from getSubscriberGlobalContext()
+ * @param {string} templateName - name in email_templates.template_name
+ */
+
+async function sendTemplatedEmail(subscriberCtx, templateName) {
+    if (!MAILERSEND_API_KEY) {
+        console.warn('MAILERSEND_API_KEY not set; skipping');
+
+
+        return {
+            status: 'skipped, no api key',
+            response: {
+                message: 'No API key found, email not sent'
+            },
+        };
+
+    }
+
+    const templ = await templateService.getTemplate(templateName);
+    if (!templ) {
+        throw new Error(`Template not found: ${templateName}`);
+    }
+
+    const tokens = {
+        name: subscriberCtx.name || 'AnonymousSubscriber',
+        email: subscriberCtx.email,
+
+        BC_field_enrollment_status: subscriberCtx.BC_field_enrollment_status,
+        BC_field_contrib_sum: subscriberCtx.BC_field_contrib_sum,
+        BC_field_ref_verified: subscriberCtx.BC_field_ref_verified,
+        BC_field_ref_level: subscriberCtx.BC_field_ref_level,
+
+        campaign_group: subscriberCtx.campaign_group,
+        campaign_id: subscriberCtx.campaign_id,
+    };
+
+    const subject = applyTokens(templ.subject_template, tokens);
+    const html = applyTokens(templ.html_template, tokens);
+    const text = templ.text_template ? applyTokens(templ.text_template, tokens) : '';
+
+    const payload = {
+        from: {
+            email: FROM_EMAIL,
+            name: FROM_NAME
+        },
+
+        to: [
+            {
+                email: subscriberCtx.email,
+                name: subscriberCtx.name || ''
+            },
+        ],
+        subject,
+        text,
+        html,
+    };
+
+    try {
+        const response = await axios.post(
+            'https://api.mailersend.com/v1/email',
+            payload,
+            {
+                headers: {
+                    'Content-Type': 'application/json',
+                    Authorization: `Bearer ${MAILERSEND_API_KEY}`,
+                },
+            }
+        );
+
+        const providerId = response.headers['x-message-id'] || null;
+        return {
+            status: 'sent',
+            providerId,
+            jsonResponse: {
+                status: response.status,
+                data: response.data,
+                headers: response.headers
+            },
+        };
+    }catch (error) {
+        console.log('Error sending MailerSend email:', error.response?.data);
+        return {
+            status: 'failed',
+            jsonResponse: {
+                message: error.response?.data,
+                status: error.response?.status,
+                data: error.response?.data,
+            }
+        }
+    }
+}
+
 module.exports = {
     sendWelcomeEmail,
     applyTokens,
+    sendTemplatedEmail,
 }
 

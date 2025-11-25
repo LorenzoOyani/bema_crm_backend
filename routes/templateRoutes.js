@@ -2,6 +2,9 @@ const express = require('express');
 const router = express.Router();
 const templateService = require('../service/templateService')
 
+router.get('/ping', (req, res) => {
+  res.json({ success: true });
+});
 
 // POST /api/templates/save
 router.post('/save', async (req, res) => {
@@ -50,6 +53,8 @@ router.get('/:name', async (req, res) => {
         return res.status(500).json({error: 'Internal server error'});
     }
 });
+
+
 
 
 module.exports = router;

@@ -9,6 +9,10 @@ const subscriberFieldService = require('../service/subscriberFieldService')
 const {validateEmailWithZod} = require('../validator/validation')
 
 
+router.get('/ping', (req, res) => {
+  res.json({ success: true });
+});
+
 router.post('/updateSubscribers', async (req, res) => {
     try {
         const {name, email, status} = req.body;
@@ -125,7 +129,7 @@ router.post('/withFields', async (req, res) => {
 
         return res.json({
             success: true,
-            ...result
+            ...result,
         });
     } catch (err) {
         console.error("Error updating a subscriber", err);
@@ -169,5 +173,8 @@ router.get('/:id', async (req, res) => {
         res.status(500).json({error: 'Internal server error'});
     }
 });
+
+
+
 
 module.exports = router;

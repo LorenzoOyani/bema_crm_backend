@@ -2,6 +2,7 @@ const db = require('../api/db')
 
 const subscriberService = require('../service/subscriberService')
 const customFieldService = require('../service/customFieldService')
+const {validateEmailWithZod} = require('../validator/validation');
 
 
 async function subscriberExistByEmail({name, email, status = 'active'}) {
@@ -72,7 +73,6 @@ async function setSubscriberFields(payload) {
 }
 
 
-
 /**
  * FETCH SUBSCRIBER + FIELDS BY EMAIL
  */
@@ -80,8 +80,11 @@ async function setSubscriberFields(payload) {
 async function getSubscriberWithFieldsByEmail(email) {
 
     // const validEmailString = validateEmailWithZod(email);
-    validate(email)
+    // const  validateEmail = validateEmailWithZod(email)
 
+    if (!email || typeof email !== 'string') {
+        throw new Error('email object is required!')
+    }
     const dbSubscriber = await db.query(
         'SELECT * FROM subscriber WHERE email = $1',
         [email]
@@ -96,7 +99,7 @@ async function getSubscriberWithFieldsByEmail(email) {
         `
             SELECT cf.field_name, scfv.field_value
             FROM subscriber_custom_field_values scfv
-                     JOIN custom_fields cf ON scfv.field_id = cf.id
+            JOIN custom_fields cf ON scfv.field_id = cf.id
             WHERE scfv.subscriber_id = $1
             ORDER BY cf.field_name;
         `,
@@ -112,11 +115,10 @@ async function getSubscriberWithFieldsByEmail(email) {
     return {
         subscriber,
         fields,
-
     }
 }
+
 module.exports = {
-    validate,
     setSubscriberFields,
     getSubscriberWithFieldsByEmail,
 }
