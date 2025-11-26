@@ -69,6 +69,20 @@ async function handleOpenEnrollment({
                                     }) {
     await ensureGlobalBCFields(db);
 
+    const dbSub = await db.query(
+        `SELECT id
+         FROM subscriber
+         WHERE id = $1
+         LIMIT 1`,
+        [subscriberId]
+    );
+
+    if (!dbSub.rows[0]) {
+        const err = new Error(`subscriber ${subscriberId} not found`)
+        err.code = 'SUBSCRIBER_NOT_FOUND';
+        throw err;
+    }
+
     const client = await db.connect();
 
     try {

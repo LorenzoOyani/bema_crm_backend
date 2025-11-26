@@ -2,9 +2,9 @@ require("dotenv").config();
 const axios = require("axios");
 const templateService = require('../service/templateService');
 
-const MAILERSEND_API_KEY = process.env.MAILERSEND_API_KEY;
-const FROM_EMAIL = process.env.MAILERSEND_FROM_EMAIL;
-const FROM_NAME = process.env.MAILERSEND_FROM_NAME || 'Bema Music';
+const MAILERSEND_API_KEY = process.env.MAILSEND_API_KEY;
+const FROM_EMAIL = process.env.MAILSEND_FROM_EMAIL;
+const FROM_NAME = process.env.MAILSEND_NAME|| 'Bema Music';
 
 
 const DEFAULT_SUBJECT =

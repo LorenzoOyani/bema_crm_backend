@@ -15,6 +15,15 @@ const PORT = process.env.PORT || 3000;
 
 console.log("Booting Bema CRM backend...");
 
+
+app.use('/api/subscribers', subscriberRoutes);
+
+app.use('/api/templates', templateRoutes);
+
+app.use('/api/automations', automationRoutes);
+
+
+
 app.get('/', async (req, res) => {
     try {
         await db.testConnection();
@@ -24,13 +33,6 @@ app.get('/', async (req, res) => {
         res.status(500).json({status: 'error', message: 'DB connection failed'});
     }
 });
-
-
-app.use('/api/subscribers', subscriberRoutes);
-
-app.use('/api/templates', templateRoutes);
-
-app.use('/api/automations', automationRoutes);
 
 
 /**
