@@ -1,0 +1,188 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "pre-enroll",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -240,
+        -48
+      ],
+      "id": "be959404-e0ae-4f4c-9659-b636508d3cc0",
+      "name": "Webhook",
+      "webhookId": "5c4bfad0-545c-495f-9b28-5ec210f917d7"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "Rule1",
+                    "rightValue": "SOC_2025_PRE_ENROLL",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "f2095d2f-80c1-4825-bd8f-f1dea1734bfa"
+                  }
+                ],
+                "combinator": "and"
+              }
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "0b41c7cf-fbb9-4554-9731-1df7174fa66f",
+                    "leftValue": "Rule2",
+                    "rightValue": "SOC_2025_OPEN_ENROLLMENT",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              }
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.3,
+      "position": [
+        144,
+        -48
+      ],
+      "id": "78f543c8-0bc6-421c-a07f-322609c3e258",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://adelynn-semisuccessful-masculinely.ngrok-free.dev/api/automations/open-enrollment",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"SOC_2025_OPEN_ENROLLMENT\",\n  \"subscriber_id\": 1,\n  \"subscriberId\": 1,\n  \"campaign_id\": \"25_SOC\",\n  \"campaignId\": \"25_SOC\"\n}\n",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        512,
+        -144
+      ],
+      "id": "81472b56-840f-404a-9132-afa6004732b9",
+      "name": "pre-enroll"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://adelynn-semisuccessful-masculinely.ngrok-free.dev/api/automations/pre-enroll",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"event\": \"SOC_2025_PRE_ENROLL\",\n  \"subscriber\": {\n    \"name\": \"Daniel\",\n    \"email\": \"daniel@test.com\"\n  },\n  \"campaign_id\": \"25_SOC\"\n}\n",
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        592,
+        96
+      ],
+      "id": "a727165f-9c0d-47ca-87d6-fc0ad0b8cd00",
+      "name": "open-enroll"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "pre-enroll",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "open-enroll",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "49e4c73d-878f-45cf-b98f-f5ff679dc88a",
+  "meta": {
+    "instanceId": "f833c65bb19ee4b621c2b394fdd364457aed11c079b457341b19e6f05c59d98f"
+  },
+  "id": "Ma1rWZR9aulK0Uz6",
+  "tags": [
+    {
+      "updatedAt": "2025-11-29T04:57:16.216Z",
+      "createdAt": "2025-11-29T04:57:16.216Z",
+      "id": "x9KQMiZgpUH9e6fn",
+      "name": "SOC_flow_A_send_email"
+    }
+  ]
+}

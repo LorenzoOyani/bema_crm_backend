@@ -6,30 +6,38 @@ const {upsertBCGlobalFields} = require("./bcFieldService");
 
 
 async function handlePreEnrollment({name, email, campaignId = '25_SOC'}) {
+
+    if(!email){
+        const error = new Error(`Email is required for pre-enrollment!`);
+        error.code = 'EMAIL_REQUIRED';
+        throw error;
+    }
+
+
     const validEmail = validateEmailWithZod(email);
 
     await ensureGlobalBCFields(db);
-    const client = await db.connect();
+    const client = await db.connect() ;
 
     try {
         await client.query('BEGIN');
 
-        const subscriber = await (async () => {
-            const result = await client.query(
-                `
-                    INSERT INTO subscriber (name, email, status, created_at)
-                    VALUES ($1, $2, 'active', NOW())
-                    ON CONFLICT (email)
-                        DO UPDATE SET name       = EXCLUDED.name,
-                                      updated_at = NOW()
-                    RETURNING id, name, email, status, created_at, updated_at;
-                `,
+
+            const subscriberRes = await client.query(
+                 `
+            INSERT INTO subscriber (name, email, status, created_at)
+            VALUES ($1, $2, 'active', NOW())
+            ON CONFLICT (email)
+                DO UPDATE SET
+                name = EXCLUDED.name,
+                updated_at = NOW()
+        RETURNING id, name, email, status, created_at, updated_at;
+      `,
                 [name || null, validEmail]
             );
-            return result.rows[0];
-        })();
+            const subscriber = subscriberRes.rows[0];
 
-        await upsertBCGlobalFields(
+            await upsertBCGlobalFields(
             subscriber.id,
             {
                 BC_field_enrollment_status: 'pre_enrollment',
@@ -50,7 +58,12 @@ async function handlePreEnrollment({name, email, campaignId = '25_SOC'}) {
         );
 
         await client.query('COMMIT');
-        return {subscriberId: subscriber.id, campaignId};
+        return {
+            subscriberId: subscriber.id,
+            campaignId,
+            campaignGroup: 'pre_enrollment',
+
+        };
 
     } catch (err) {
         await client.query('ROLLBACK');
@@ -102,11 +115,11 @@ async function handleOpenEnrollment({
         );
 
         await client.query('COMMIT');
-        return {subscriberId, campaignId};
+        return {subscriberId, campaignId, campaignGroup: 'pre_enrollment'};
     } catch (err) {
         await client.query('ROLLBACK');
-        err.status = 404;
-        err.message = err.message || 'Database compromise'
+        err.status = err.status || 500;
+        err.message = err.message || 'Internal Server Error';
         throw err;
     } finally {
         client.release();

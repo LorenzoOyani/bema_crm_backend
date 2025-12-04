@@ -5,23 +5,23 @@ const subscriberFieldService = require('../service/subscriberFieldService');
 const templateService = require('../service/templateService');
 const emailLogService = require('../service/emailLogService');
 const {
-  applyTokens,
-  sendWelcomeEmail,
-  sendTemplatedEmail,
+    applyTokens,
+    sendWelcomeEmail,
+    sendTemplatedEmail,
 } = require('../service/emailGatewayService');
 const {
-  handlePreEnrollment,
-  handleOpenEnrollment,
+    handlePreEnrollment,
+    handleOpenEnrollment,
 } = require('../service/bcEnrollmentService');
-const { createFlowLog } = require("../service/flowlogService");
-const { getSubscriberGlobalContext } = require("../service/subscriberContextService");
+const {createFlowLog} = require("../service/flowlogService");
+const {getSubscriberGlobalContext} = require("../service/subscriberContextService");
 
 /**
  * Simple ping route for health checks:
  * GET /api/automations/ping
  */
 router.get('/ping', (req, res) => {
-  res.json({ success: true, scope: 'automations' });
+    res.json({success: true, scope: 'automations'});
 });
 
 /**
@@ -29,32 +29,32 @@ router.get('/ping', (req, res) => {
  * GET /api/automations/context?subscriberId=1&campaignId=25_SOC
  */
 router.get('/context', async (req, res) => {
-  try {
-    const { subscriberId, campaignId } = req.query;
+    try {
+        const {subscriberId, campaignId} = req.query;
 
-    if (!subscriberId || !campaignId) {
-      return res.status(400).json({
-        success: false,
-        error: 'subscriberId and campaignId are required',
-      });
+        if (!subscriberId || !campaignId) {
+            return res.status(400).json({
+                success: false,
+                error: 'subscriberId and campaignId are required',
+            });
+        }
+
+        const ctx = await getSubscriberGlobalContext(
+            Number(subscriberId),
+            String(campaignId)
+        );
+
+        return res.json({
+            success: true,
+            context: ctx,
+        });
+    } catch (error) {
+        console.error('Error in /context:', error);
+        return res.status(400).json({
+            success: false,
+            error: error.message,
+        });
     }
-
-    const ctx = await getSubscriberGlobalContext(
-      Number(subscriberId),
-      String(campaignId)
-    );
-
-    return res.json({
-      success: true,
-      context: ctx,
-    });
-  } catch (error) {
-    console.error('Error in /context:', error);
-    return res.status(400).json({
-      success: false,
-      error: error.message,
-    });
-  }
 });
 
 /**
@@ -62,14 +62,59 @@ router.get('/context', async (req, res) => {
  * POST /api/automations/pre-enroll
  * body: { name, email, campaign_id? }
  */
+// router.post('/pre-enroll', async (req, res) => {
+//     try {
+//
+//         console.log('PRE-ENROLL body:', req.body);
+//         const {name, email, campaign_id} = req.body;
+//
+//         const result = await handlePreEnrollment({
+//             name,
+//             email,
+//             campaignId: campaign_id || '25_SOC',
+//         });
+//
+//         await createFlowLog(req.body, 'pre-enroll');
+//
+//         return res.json({
+//             success: true,
+//             ...result,
+//         });
+//     } catch (err) {
+//         console.error('Error in /pre-enroll:', err);
+//         return res.status(400).json({
+//             success: false,
+//             error: err.message,
+//         });
+//     }
+// });
+
 router.post('/pre-enroll', async (req, res) => {
   try {
-    const { name, email, campaign_id } = req.body;
+    console.log('PRE-ENROLL body:', req.body);
+
+    let {
+      name,
+      email,
+      campaign_id,
+      campaignId,
+      subscriber,
+    } = req.body;
+
+    // If body came in as { event, subscriber: { name, email }, campaign_id }
+    if (!name && subscriber && subscriber.name) {
+      name = subscriber.name;
+    }
+    if (!email && subscriber && subscriber.email) {
+      email = subscriber.email;
+    }
+
+    const resolvedCampaignId = campaign_id || campaignId || '25_SOC';
 
     const result = await handlePreEnrollment({
       name,
       email,
-      campaignId: campaign_id || '25_SOC',
+      campaignId: resolvedCampaignId,
     });
 
     await createFlowLog(req.body, 'pre-enroll');
@@ -77,12 +122,14 @@ router.post('/pre-enroll', async (req, res) => {
     return res.json({
       success: true,
       ...result,
+      campaignGroup: 'pre_enrollment',
     });
   } catch (err) {
     console.error('Error in /pre-enroll:', err);
     return res.status(400).json({
       success: false,
       error: err.message,
+      code: err.code || 'UNKNOWN',
     });
   }
 });
@@ -92,29 +139,75 @@ router.post('/pre-enroll', async (req, res) => {
  * POST /api/automations/open-enrollment
  * body: { subscriber_id, campaign_id? }
  */
+// router.post('/open-enrollment', async (req, res) => {
+//     try {
+//         const {subscriber_id, campaign_id} = req.body;
+//
+//         const result = await handleOpenEnrollment({
+//             subscriberId: subscriber_id,
+//             campaignId: campaign_id || '25_SOC',
+//         });
+//
+//         await createFlowLog(req.body, 'open-enrollment received');
+//
+//         return res.json({
+//             success: true,
+//             ...result,
+//         });
+//     } catch (err) {
+//         console.error('Error in /open-enrollment:', err);
+//         return res.status(400).json({
+//             success: false,
+//             error: err.message,
+//         });
+//     }
+// });
+
+
+
 router.post('/open-enrollment', async (req, res) => {
   try {
-    const { subscriber_id, campaign_id } = req.body;
+    console.log('OPEN-ENROLL body:', req.body);
+
+    let {
+      subscriber_id,
+      subscriberId,
+      campaign_id,
+      campaignId,
+      event
+    } = req.body;
+
+    const resolvedSubscriberId = subscriber_id || subscriberId;
+    const resolvedCampaignId = campaign_id || campaignId || '25_SOC';
+
+    if (!resolvedSubscriberId) {
+            const err = new Error('subscriber_id is required for open enrollment!');
+            err.code = 'SUBSCRIBER_ID_REQUIRED';
+            return err;
+    }
 
     const result = await handleOpenEnrollment({
-      subscriberId: subscriber_id,
-      campaignId: campaign_id || '25_SOC',
+      subscriberId: resolvedSubscriberId,
+      campaignId: resolvedCampaignId,
     });
 
-    await createFlowLog(req.body, 'open-enrollment received');
+    await createFlowLog(req.body, 'open-enrollment');
 
     return res.json({
       success: true,
       ...result,
+      campaignGroup: 'open_enrollment',
     });
   } catch (err) {
-    console.error('Error in /open-enrollment:', err);
+    console.error('Error:', err);
     return res.status(400).json({
       success: false,
       error: err.message,
+      code: err.code || 'UNKNOWN',
     });
   }
 });
+
 
 /**
  * Utility test route:
@@ -123,48 +216,48 @@ router.post('/open-enrollment', async (req, res) => {
  * Uses subscriber + fields to send a simple MailerSend email.
  */
 router.post('/run', async (req, res) => {
-  try {
-    const { email, templateName } = req.body;
+    try {
+        const {email, templateName} = req.body;
 
-    const subData = await subscriberFieldService.getSubscriberWithFieldsByEmail(email);
-    if (!subData) {
-      return res.status(400).json({ error: 'Subscriber not found' });
+        const subData = await subscriberFieldService.getSubscriberWithFieldsByEmail(email);
+        if (!subData) {
+            return res.status(400).json({error: 'Subscriber not found'});
+        }
+
+        const template = await templateService.getTemplate(templateName);
+        if (!template) {
+            return res.status(400).json({error: 'Template not found'});
+        }
+
+        const tokens = {
+            name: subData.subscriber.name,
+            email: subData.subscriber.email,
+            ...subData.fields,
+        };
+
+        // Apply tokens (mostly for debug; return values are not captured here)
+        applyTokens(template.subject_template, tokens);
+        applyTokens(template.html_template, tokens);
+        applyTokens(template.text_template, tokens);
+
+        const sendResult = await sendWelcomeEmail(
+            subData.subscriber,
+            tokens,
+        );
+
+        await emailLogService.logEmail({
+            subscriberId: subData.subscriber.id,
+            campaignId: templateName,
+            templateName,
+            status: sendResult.status,
+            jsonResponse: sendResult.jsonResponse,
+        });
+
+        return res.json({success: true});
+    } catch (err) {
+        console.error('Automation /run error', err);
+        return res.status(500).json({error: 'Internal server error'});
     }
-
-    const template = await templateService.getTemplate(templateName);
-    if (!template) {
-      return res.status(400).json({ error: 'Template not found' });
-    }
-
-    const tokens = {
-      name: subData.subscriber.name,
-      email: subData.subscriber.email,
-      ...subData.fields,
-    };
-
-    // Apply tokens (mostly for debug; return values are not captured here)
-    applyTokens(template.subject_template, tokens);
-    applyTokens(template.html_template, tokens);
-    applyTokens(template.text_template, tokens);
-
-    const sendResult = await sendWelcomeEmail(
-      subData.subscriber,
-      tokens,
-    );
-
-    await emailLogService.logEmail({
-      subscriberId: subData.subscriber.id,
-      campaignId: templateName,
-      templateName,
-      status: sendResult.status,
-      jsonResponse: sendResult.jsonResponse,
-    });
-
-    return res.json({ success: true });
-  } catch (err) {
-    console.error('Automation /run error', err);
-    return res.status(500).json({ error: 'Internal server error' });
-  }
 });
 
 /**
@@ -173,48 +266,48 @@ router.post('/run', async (req, res) => {
  * body: { subscriber_id, campaign_id, template_pre_enroll?, template_open_enroll? }
  */
 router.post('/send-email', async (req, res) => {
-  try {
-    const {
-      subscriber_id,
-      campaign_id,
-      template_pre_enroll = 'SOC_2025_PRE_ENROLL',
-      template_open_enroll = 'SOC_2025_OPEN_ENROLL',
-    } = req.body;
+    try {
+        const {
+            subscriber_id,
+            campaign_id,
+            template_pre_enroll = 'SOC_2025_PRE_ENROLL',
+            template_open_enroll = 'SOC_2025_OPEN_ENROLL',
+        } = req.body;
 
-    const ctx = await getSubscriberGlobalContext(
-      subscriber_id,
-      campaign_id || '25_SOC'
-    );
+        const ctx = await getSubscriberGlobalContext(
+            subscriber_id,
+            campaign_id || '25_SOC'
+        );
 
-    // choose template based on campaign_group
-    const templateName =
-      ctx.campaign_group === 'pre_enrollment'
-        ? template_pre_enroll
-        : template_open_enroll;
+        // choose template based on campaign_group
+        const templateName =
+            ctx.campaign_group === 'pre_enrollment'
+                ? template_pre_enroll
+                : template_open_enroll;
 
-    const emailResult = await sendTemplatedEmail(ctx, templateName);
+        const emailResult = await sendTemplatedEmail(ctx, templateName);
 
-    // log email
-    await emailLogService.logEmail({
-      subscriberId: subscriber_id,
-      campaignId: ctx.campaign_id,
-      templateName,
-      status: emailResult.status,
-      jsonResponse: emailResult.jsonResponse,
-    });
+        // log email
+        await emailLogService.logEmail({
+            subscriberId: subscriber_id,
+            campaignId: ctx.campaign_id,
+            templateName,
+            status: emailResult.status,
+            jsonResponse: emailResult.jsonResponse,
+        });
 
-    return res.json({
-      success: true,
-      campaign_group: ctx.campaign_group,
-      email_status: emailResult.status,
-    });
-  } catch (err) {
-    console.error('Error in /send-email:', err);
-    return res.status(400).json({
-      success: false,
-      error: err.message,
-    });
-  }
+        return res.json({
+            success: true,
+            campaign_group: ctx.campaign_group,
+            email_status: emailResult.status,
+        });
+    } catch (err) {
+        console.error('Error in /send-email:', err);
+        return res.status(400).json({
+            success: false,
+            error: err.message,
+        });
+    }
 });
 
 module.exports = router;

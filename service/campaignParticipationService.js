@@ -1,7 +1,7 @@
 const db = require('../api/db')
 
 async function upsertCampaignParticipation(subscriberId, campaignId, campaignGroup, client = db){
-    await client.query(
+   const res  = await client.query(
          `
     INSERT INTO subscriber_campaign_participation (subscriber_id, campaign_id, campaign_group)
     VALUES ($1, $2, $3)
@@ -12,6 +12,8 @@ async function upsertCampaignParticipation(subscriberId, campaignId, campaignGro
     `,
     [subscriberId, campaignId, campaignGroup]
     )
+
+    return res.rows[0] || null;
 }
 
 

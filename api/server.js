@@ -5,7 +5,9 @@ const db = require("./db");
 const subscriberRoutes = require("../routes/subscriberRoutes");
 const templateRoutes = require('../routes/templateRoutes');
 const automationRoutes = require('../routes/automationRoutes');
+const emailLogRoutes = require('../routes/emailLogRoutes');
 const flowLogsService = require("../service/flowlogService");
+
 const app = express();
 
 app.use(express.json());
@@ -16,12 +18,13 @@ const PORT = process.env.PORT || 3000;
 console.log("Booting Bema CRM backend...");
 
 
+app.use('/api/email_logs', emailLogRoutes);
+
 app.use('/api/subscribers', subscriberRoutes);
 
 app.use('/api/templates', templateRoutes);
 
 app.use('/api/automations', automationRoutes);
-
 
 
 app.get('/', async (req, res) => {

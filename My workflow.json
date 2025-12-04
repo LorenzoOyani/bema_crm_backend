@@ -1,0 +1,139 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "flow_b_send_email",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        -304,
+        0
+      ],
+      "id": "84aa7f4e-198e-4d4e-920c-46b3fd07bbfa",
+      "name": "Webhook",
+      "webhookId": "afbe0684-ebd3-4539-a01c-c514712a86dc"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://adelynn-semisuccessful-masculinely.ngrok-free.dev/api/automations/send-email",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "subscriber_id",
+              "value": "={{$json[\"subscriberId\"]}}"
+            },
+            {
+              "name": "campaign_id",
+              "value": "={{$json[\"campaignId\"]}}"
+            },
+            {
+              "name": "template_pre_enroll",
+              "value": "SOC_2025_PRE_ENROLL"
+            },
+            {
+              "name": "template_open_enroll",
+              "value": "SOC_2025_OPEN_ENROLL"
+            }
+          ]
+        },
+        "options": {
+          "timeout": 10000
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        352,
+        -16
+      ],
+      "id": "3c92bf70-2313-427c-bcc0-84596859b818",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "31220bea-83b5-4196-b50a-d409fd9810b7",
+              "name": "subscriberId",
+              "value": 1,
+              "type": "number"
+            },
+            {
+              "id": "d647d8e6-2a8b-4745-813a-de02cbf12668",
+              "name": "campaignId",
+              "value": "25_SOC",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [
+        48,
+        144
+      ],
+      "id": "34341bc5-b2ca-4444-afcf-8ba190a28f20",
+      "name": "Edit Fields"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Edit Fields",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Edit Fields": {
+      "main": [
+        [
+          {
+            "node": "HTTP Request",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "435c73b7-25d8-44fc-bfd0-922e1a279dda",
+  "meta": {
+    "instanceId": "f833c65bb19ee4b621c2b394fdd364457aed11c079b457341b19e6f05c59d98f"
+  },
+  "id": "sAE4yv9h3onOtNOS",
+  "tags": [
+    {
+      "updatedAt": "2025-11-27T14:56:10.694Z",
+      "createdAt": "2025-11-27T14:56:10.694Z",
+      "id": "I1Ytx5BMKsydqHT1",
+      "name": "SOC_flow_B_send_email"
+    }
+  ]
+}
